@@ -1,5 +1,6 @@
 package com.mwangblog.midiprocessing;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +21,7 @@ import android.widget.TextView;
 
 import org.w3c.dom.Text;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
@@ -134,18 +136,9 @@ public class MidiFragment extends Fragment {
     }
 
     private void setMidiInfo () {
-        final Handler handler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                mInfoProgressBar.setVisibility(View.GONE);
-                mGetInfoButton.setEnabled(true);
-                DrawMidiChart();
-                // ShowMidiInfo();
-            }
-        };
 
-        mInfoProgressBar.setVisibility(View.VISIBLE);
-        mGetInfoButton.setEnabled(false);
+        final Handler handler = new SetMidiInfoHandler(this);
+        startSetMidiInfo();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -153,6 +146,32 @@ public class MidiFragment extends Fragment {
                 handler.sendEmptyMessage(0);
             }
         }).start();
+    }
+
+    private void startSetMidiInfo () {
+        mInfoProgressBar.setVisibility(View.VISIBLE);
+        mGetInfoButton.setEnabled(false);
+        mMidiInfoTextView.setText(getResources().getString(R.string.please_wait));
+    }
+
+    private void endSetMidiInfo () {
+        mInfoProgressBar.setVisibility(View.GONE);
+        mGetInfoButton.setEnabled(true);
+    }
+
+    private static class SetMidiInfoHandler extends Handler {
+        private final WeakReference<MidiFragment> mMidiFragmentWeakReference;
+
+        public SetMidiInfoHandler (MidiFragment fragment) {
+            mMidiFragmentWeakReference = new WeakReference<MidiFragment>(fragment);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            MidiFragment fragment = mMidiFragmentWeakReference.get();
+            fragment.DrawMidiChart();
+            fragment.endSetMidiInfo();
+        }
     }
 
     private void ShowMidiInfo () {
