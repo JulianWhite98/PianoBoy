@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">MidiProcessing</string>
+    <string name="midi_title">Title: %1$s</string>
+    <string name="play_midi">Play</string>
+    <string name="stop_midi">Stop</string>
+    <string name="get_midi_info">Get Info</string>
+    <string name="get_pitch">Get Pitch</string>
+    <string name="pitch_information">%1$.2f Hz</string>
+    <string name="get_information">Press button to get information.</string>
+    <string name="chart_show_below">Chart:</string>
+    <string name="chart_axis_x">Tick</string>
+    <string name="chart_axis_y">Note</string>
+</resources>
