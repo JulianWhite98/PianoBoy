@@ -68,7 +68,7 @@ public class MidiEventPrinter implements MidiEventListener
     @Override
     public void onEvent(MidiEvent event, long ms)
     {
-        // Log.i(TAG,mLabel + " received event: " + event);
+//        Log.i(TAG,mLabel + " received event: " + event);
         if (event instanceof Tempo) {
             mTempo = (Tempo) event;
         } else if (event instanceof NoteOn) {

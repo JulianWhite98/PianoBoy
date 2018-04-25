@@ -59,26 +59,27 @@ public class Midi {
 
     public void setMidiInfo () {
         InputStream is = null;
+        MidiFile midiFile;
         if (mMidiInfo == null) {
             try {
                 is = mAssets.open(this.getAssetPath());
-                MidiFile midiFile = new MidiFile(is);
+                midiFile = new MidiFile(is);
+                is.close();
                 MidiProcessor processor = new MidiProcessor(midiFile);
                 MidiEventPrinter ep = new MidiEventPrinter(mName);
                 processor.registerEventListener(ep, MidiEvent.class);
                 processor.start();
                 while (processor.isRunning()) {
-                    Log.i (TAG, "Test whether processor finished.");
-                    Thread.sleep(1000);
+//                    Log.i (TAG, "Test whether processor finished.");
+                    Thread.sleep(100);
                 }
                 mMidiInfo = ep.getInfo();
                 mMyNotes = new MyNotes(ep.getTempo(), ep.getNoteOns(), ep.getNoteOffs());
                 Log.i(TAG, "setMidiInfo() successfully.");
-                is.close();
             } catch (IOException ioe) {
                 Log.e(TAG, "setMidiInfo() wrong : init InputStream.");
             } catch (InterruptedException ie) {
-
+                Log.e(TAG, "setMidiInfo() wrong : Thread sleep ie.");
             }
             // Log.i(TAG, "init InputStream successfully.");
         } else {

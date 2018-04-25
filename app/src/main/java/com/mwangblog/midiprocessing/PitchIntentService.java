@@ -27,6 +27,7 @@ public class PitchIntentService extends IntentService {
 
     private Thread mAudioThread;
     private static float mPitchInHz;
+    private static double mPitchInSemitone;
 
     public PitchIntentService () {
         super("PitchIntentService");
@@ -65,13 +66,22 @@ public class PitchIntentService extends IntentService {
 
     public void processHz (float pitchInHz) {
         mPitchInHz = pitchInHz;
+        mPitchInSemitone = hzToSemitone(pitchInHz);
     }
 
     public static float getPitchInHz() {
         return mPitchInHz;
     }
 
+    public static double getmPitchInSemitone() {
+        return mPitchInSemitone;
+    }
+
     public static Boolean isRunning() {
         return mIsRunning;
+    }
+
+    public static double hzToSemitone (double hz) {
+        return (hz == -1) ? 0.0 : 12 * ( Math.log(hz)/Math.log(2) - Math.log(440)/Math.log(2) ) + 69;
     }
 }

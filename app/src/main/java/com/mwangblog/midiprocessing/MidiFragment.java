@@ -120,7 +120,7 @@ public class MidiFragment extends Fragment {
         mPitchFreshRunnable = new Runnable() {
             @Override
             public void run() {
-                mPitchTextView.setText(String.format(getResources().getString(R.string.pitch_information), PitchIntentService.getPitchInHz()));
+                mPitchTextView.setText(String.format(getResources().getString(R.string.pitch_information), PitchIntentService.getmPitchInSemitone()));
                 mPitchHandler.postDelayed(mPitchFreshRunnable, 200);
                 // Log.i(TAG, "mPitchTextView setText" + PitchIntentService.getPitchInHz());
             }
