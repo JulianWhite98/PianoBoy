@@ -9,6 +9,6 @@
     <string name="pitch_information">%1$.2f Note</string>
     <string name="get_information">Press button to get information.</string>
     <string name="chart_show_below">Chart:</string>
-    <string name="chart_axis_x">Tick</string>
+    <string name="chart_axis_x">Ms</string>
     <string name="chart_axis_y">Note</string>
 </resources>

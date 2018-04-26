@@ -11,12 +11,14 @@ import java.util.ArrayList;
 public class MyNotes {
 
     private ArrayList<MyNote> mMyNotes;
+    private int mResolution;
     private Tempo mTempo;
 
     private static final String TAG = "MyNotes";
 
-    public MyNotes (Tempo tempo, ArrayList<NoteOn> noteOns, ArrayList<NoteOff> noteOffs) {
+    public MyNotes (int resolution, Tempo tempo, ArrayList<NoteOn> noteOns, ArrayList<NoteOff> noteOffs) {
         mMyNotes = new ArrayList<MyNote>();
+        mResolution = resolution;
         mTempo = tempo;
 
         for (NoteOn noteOn : noteOns) {
@@ -49,15 +51,7 @@ public class MyNotes {
         return mTempo;
     }
 
-    public MyNote getMyNote (int i) {
-        if (i >= mMyNotes.size()) {
-            Log.e (TAG, "getMyNote() : index > lenght");
-            return null;
-        }
-        return mMyNotes.get(i);
-    }
-
-    public int getLength() {
-        return mMyNotes.size();
+    public int getResolution() {
+        return mResolution;
     }
 }

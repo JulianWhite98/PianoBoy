@@ -59,11 +59,10 @@ public class Midi {
 
     public void setMidiInfo () {
         InputStream is = null;
-        MidiFile midiFile;
         if (mMidiInfo == null) {
             try {
                 is = mAssets.open(this.getAssetPath());
-                midiFile = new MidiFile(is);
+                MidiFile midiFile = new MidiFile(is);
                 is.close();
                 MidiProcessor processor = new MidiProcessor(midiFile);
                 MidiEventPrinter ep = new MidiEventPrinter(mName);
@@ -74,7 +73,7 @@ public class Midi {
                     Thread.sleep(100);
                 }
                 mMidiInfo = ep.getInfo();
-                mMyNotes = new MyNotes(ep.getTempo(), ep.getNoteOns(), ep.getNoteOffs());
+                mMyNotes = new MyNotes(midiFile.getResolution(),ep.getTempo(), ep.getNoteOns(), ep.getNoteOffs());
                 Log.i(TAG, "setMidiInfo() successfully.");
             } catch (IOException ioe) {
                 Log.e(TAG, "setMidiInfo() wrong : init InputStream.");

@@ -19,6 +19,8 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.mwangblog.midiprocessing.util.MidiUtil;
+
 import org.w3c.dom.Text;
 
 import java.lang.ref.WeakReference;
@@ -120,12 +122,12 @@ public class MidiFragment extends Fragment {
         mPitchFreshRunnable = new Runnable() {
             @Override
             public void run() {
-                mPitchTextView.setText(String.format(getResources().getString(R.string.pitch_information), PitchIntentService.getmPitchInSemitone()));
-                mPitchHandler.postDelayed(mPitchFreshRunnable, 200);
+                mPitchTextView.setText(String.format(getResources().getString(R.string.pitch_information), PitchIntentService.getPitchInSemitone()));
+                mPitchHandler.postDelayed(mPitchFreshRunnable, 50);
                 // Log.i(TAG, "mPitchTextView setText" + PitchIntentService.getPitchInHz());
             }
         };
-        mPitchHandler.postDelayed(mPitchFreshRunnable, 200);
+        mPitchHandler.postDelayed(mPitchFreshRunnable, 50);
 
         mInfoProgressBar = (ProgressBar) v.findViewById(R.id.info_progress_bar);
         mInfoProgressBar.setVisibility(View.GONE);
@@ -196,11 +198,13 @@ public class MidiFragment extends Fragment {
 
     private void DrawMidiChart () {
         MyNotes myNotes = mMidi.getMyNotes();
+        int pqn = myNotes.getTempo().getMpqn();
+        int resolution = myNotes.getResolution();
         ArrayList<Line> lines = new ArrayList<Line>();
         for (MyNote myNote : myNotes.getMyNotes()) {
             ArrayList<PointValue> values = new ArrayList<PointValue>();
-            values.add(new PointValue(myNote.getNoteOn().getTick(), myNote.getNoteOn().getNoteValue()));
-            values.add(new PointValue(myNote.getNoteOff().getTick(), myNote.getNoteOff().getNoteValue()));
+            values.add(new PointValue(MidiUtil.ticksToMs(myNote.getNoteOn().getTick(), pqn,resolution), myNote.getNoteOn().getNoteValue()));
+            values.add(new PointValue(MidiUtil.ticksToMs(myNote.getNoteOff().getTick(), pqn, resolution), myNote.getNoteOff().getNoteValue()));
             Line line = new Line (values);
             line.setColor(ChartUtils.COLOR_RED);
             line.setShape(ValueShape.CIRCLE);

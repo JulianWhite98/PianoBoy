@@ -17,15 +17,7 @@ public class MyNote {
         return mNoteOn;
     }
 
-    public void setNoteOn(NoteOn noteOn) {
-        mNoteOn = noteOn;
-    }
-
     public NoteOff getNoteOff() {
         return mNoteOff;
-    }
-
-    public void setNoteOff(NoteOff noteOff) {
-        mNoteOff = noteOff;
     }
 }
