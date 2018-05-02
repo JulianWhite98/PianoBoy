@@ -4,10 +4,15 @@
     <string name="play_midi">Play</string>
     <string name="stop_midi">Stop</string>
     <string name="get_midi_info">Get Info</string>
+    <string name="start_practicing">Start Practice</string>
+    <string name="stop_practicing">Stop Practice</string>
     <string name="get_pitch">Get Pitch</string>
     <string name="please_wait">Please wait...</string>
-    <string name="pitch_information">%1$.2f Note</string>
+    <string name="pitch_information">Note Here</string>
+    <string name="hz"> Hz</string>
+    <string name="note"> Note</string>
     <string name="get_information">Press button to get information.</string>
+    <string name="clear_history">Clear History</string>
     <string name="chart_show_below">Chart:</string>
     <string name="chart_axis_x">Ms</string>
     <string name="chart_axis_y">Note</string>

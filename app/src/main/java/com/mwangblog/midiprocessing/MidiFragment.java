@@ -46,6 +46,7 @@ import lecho.lib.hellocharts.view.LineChartView;
 public class MidiFragment extends Fragment {
 
     private Midi mMidi;
+    private PitchList mRealPitchList;
 
     private static final String ARG_MIDI_NAME = "midi_id";
     private static final String TAG = "MidiFragment";
@@ -54,13 +55,18 @@ public class MidiFragment extends Fragment {
     private Button mPlayButton;
     private Button mStopButton;
     private Button mGetInfoButton;
+    private Button mPracticeButton;
     private TextView mPitchTextView;
     private TextView mMidiInfoTextView;
+    private ArrayList<Line> mLines;
     private LineChartView mChart;
     private ProgressBar mInfoProgressBar;
 
     private Handler mPitchHandler;
     private Runnable mPitchFreshRunnable;
+
+    private final int mDelayTime = 50;
+    private boolean mIsPracticing;
 
 
     public static MidiFragment newInstance (String name) {
@@ -77,6 +83,7 @@ public class MidiFragment extends Fragment {
         super.onCreate(savedInstanceState);
         String name = (String) getArguments().getSerializable(ARG_MIDI_NAME);
         mMidi = MidiLab.get(getActivity()).getMidi(name);
+        mRealPitchList = new PitchList();
     }
 
     @Nullable
@@ -106,12 +113,15 @@ public class MidiFragment extends Fragment {
         });
 
         mMidiInfoTextView = (TextView) v.findViewById(R.id.midi_info_text_view);
-        mMidiInfoTextView.setText("Press Button to get infomation.");
+        mMidiInfoTextView.setText(getResources().getString(R.string.get_information));
 
         mGetInfoButton = (Button) v.findViewById(R.id.midi_info_button);
         mGetInfoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                mLines.clear();
+                mRealPitchList.getPitchList().clear();
+                mRealPitchList.getPitchList().add(0);
                 setMidiInfo();
             }
         });
@@ -122,17 +132,45 @@ public class MidiFragment extends Fragment {
         mPitchFreshRunnable = new Runnable() {
             @Override
             public void run() {
-                mPitchTextView.setText(String.format(getResources().getString(R.string.pitch_information), PitchIntentService.getPitchInSemitone()));
-                mPitchHandler.postDelayed(mPitchFreshRunnable, 50);
-                // Log.i(TAG, "mPitchTextView setText" + PitchIntentService.getPitchInHz());
+                Integer pitch = ((Long) Math.round(PitchIntentService.getPitchInSemitone())).intValue();
+                mRealPitchList.getPitchList().add(pitch);
+                int length = mRealPitchList.getPitchList().size();
+                ArrayList<Integer> list = new ArrayList<>();
+                list.add(mRealPitchList.getPitchList().get(length-2));
+                list.add(mRealPitchList.getPitchList().get(length-1));
+                addIntegerLineToChart(list, length-1);
+                mPitchTextView.setText(pitch + getResources().getString(R.string.note));
+                if (mIsPracticing) {
+                    mPitchHandler.postDelayed(mPitchFreshRunnable, mDelayTime);
+                }
             }
         };
-        mPitchHandler.postDelayed(mPitchFreshRunnable, 50);
 
         mInfoProgressBar = (ProgressBar) v.findViewById(R.id.info_progress_bar);
         mInfoProgressBar.setVisibility(View.GONE);
 
+        mIsPracticing = false;
+        mPracticeButton = (Button) v.findViewById(R.id.practice_button);
+        mPracticeButton.setEnabled(false);
+        mPracticeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mIsPracticing) {
+                    mPracticeButton.setText(R.string.start_practicing);
+                    mPitchTextView.setText(0 + getResources().getString(R.string.note));
+                    mGetInfoButton.setEnabled(true);
+                    mIsPracticing = false;
+                } else {
+                    mPracticeButton.setText(R.string.stop_practicing);
+                    mGetInfoButton.setEnabled(false);
+                    mIsPracticing = true;
+                    mPitchHandler.postDelayed(mPitchFreshRunnable, mDelayTime);
+                }
+            }
+        });
+
         mChart = (LineChartView) v.findViewById(R.id.chart);
+        mLines = new ArrayList<Line>();
 
         return v;
     }
@@ -140,7 +178,9 @@ public class MidiFragment extends Fragment {
     private void setMidiInfo () {
 
         final Handler handler = new SetMidiInfoHandler(this);
-        startSetMidiInfo();
+        mInfoProgressBar.setVisibility(View.VISIBLE);
+        mGetInfoButton.setEnabled(false);
+        mMidiInfoTextView.setText(getResources().getString(R.string.please_wait));
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -148,17 +188,6 @@ public class MidiFragment extends Fragment {
                 handler.sendEmptyMessage(0);
             }
         }).start();
-    }
-
-    private void startSetMidiInfo () {
-        mInfoProgressBar.setVisibility(View.VISIBLE);
-        mGetInfoButton.setEnabled(false);
-        mMidiInfoTextView.setText(getResources().getString(R.string.please_wait));
-    }
-
-    private void endSetMidiInfo () {
-        mInfoProgressBar.setVisibility(View.GONE);
-        mGetInfoButton.setEnabled(true);
     }
 
     private static class SetMidiInfoHandler extends Handler {
@@ -171,12 +200,14 @@ public class MidiFragment extends Fragment {
         @Override
         public void handleMessage(Message msg) {
             MidiFragment fragment = mMidiFragmentWeakReference.get();
-            fragment.DrawMidiChart();
-            fragment.endSetMidiInfo();
+            fragment.mInfoProgressBar.setVisibility(View.GONE);
+            fragment.drawMidiChart();
+            fragment.mPracticeButton.setEnabled(true);
+            fragment.mGetInfoButton.setEnabled(true);
         }
     }
 
-    private void ShowMidiInfo () {
+    private void showMidiInfo () {
         MyNotes myNotes = mMidi.getMyNotes();
         String midiInfo = "pqn:" + myNotes.getTempo().getMpqn() + "\n";
         midiInfo += "\n";
@@ -196,11 +227,11 @@ public class MidiFragment extends Fragment {
         mMidiInfoTextView.setText(midiInfo);
     }
 
-    private void DrawMidiChart () {
+    private void drawMidiChart () {
+
         MyNotes myNotes = mMidi.getMyNotes();
         int pqn = myNotes.getTempo().getMpqn();
         int resolution = myNotes.getResolution();
-        ArrayList<Line> lines = new ArrayList<Line>();
         for (MyNote myNote : myNotes.getMyNotes()) {
             ArrayList<PointValue> values = new ArrayList<PointValue>();
             values.add(new PointValue(MidiUtil.ticksToMs(myNote.getNoteOn().getTick(), pqn,resolution), myNote.getNoteOn().getNoteValue()));
@@ -210,9 +241,32 @@ public class MidiFragment extends Fragment {
             line.setShape(ValueShape.CIRCLE);
             line.setHasPoints(false);
             line.setHasLabels(false);
-            lines.add(line);
+            mLines.add(line);
         }
-        LineChartData data = new LineChartData(lines);
+        updateChart();
+        mMidiInfoTextView.setText(getResources().getString(R.string.chart_show_below));
+    }
+
+    private void addIntegerLineToChart (ArrayList<Integer> numList, int index) {
+        int length = numList.size();
+        int i = length - 1;
+        ArrayList<PointValue> values = new ArrayList<PointValue>();
+        for (Integer num : numList) {
+            values.add(new PointValue(mDelayTime * (index - i), num));
+            i -= 1;
+        }
+        Line line = new Line (values);
+        line.setColor(ChartUtils.COLOR_BLUE);
+        line.setShape(ValueShape.SQUARE);
+        line.setHasPoints(false);
+        line.setHasLabels(false);
+        // line.setHasLabelsOnlyForSelected(true);
+        mLines.add(line);
+        updateChart();
+    }
+
+    private void updateChart () {
+        LineChartData data = new LineChartData(mLines);
         Axis axisX = new Axis();
         Axis axisY = new Axis();
         axisX.setName(getResources().getString(R.string.chart_axis_x));
@@ -221,7 +275,6 @@ public class MidiFragment extends Fragment {
         data.setAxisYLeft(axisY);
         mChart.setZoomEnabled(true);
         mChart.setLineChartData(data);
-        mMidiInfoTextView.setText(getResources().getString(R.string.chart_show_below));
     }
 
 
