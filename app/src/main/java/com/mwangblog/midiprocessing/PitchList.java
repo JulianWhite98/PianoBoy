@@ -8,7 +8,6 @@ public class PitchList {
 
     public PitchList() {
         mPitchList = new ArrayList<Integer>();
-        mPitchList.add(0);
     }
 
     public ArrayList<Integer> getPitchList() {

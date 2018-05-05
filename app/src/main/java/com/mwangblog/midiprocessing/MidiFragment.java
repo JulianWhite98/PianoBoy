@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -40,6 +41,7 @@ import lecho.lib.hellocharts.model.Line;
 import lecho.lib.hellocharts.model.LineChartData;
 import lecho.lib.hellocharts.model.PointValue;
 import lecho.lib.hellocharts.model.ValueShape;
+import lecho.lib.hellocharts.model.Viewport;
 import lecho.lib.hellocharts.util.ChartUtils;
 import lecho.lib.hellocharts.view.LineChartView;
 
@@ -66,6 +68,8 @@ public class MidiFragment extends Fragment {
     private Runnable mPitchFreshRunnable;
 
     private final int mDelayTime = 50;
+    private final int mMaxViewMs = 5000;
+
     private boolean mIsPracticing;
 
 
@@ -121,7 +125,6 @@ public class MidiFragment extends Fragment {
             public void onClick(View v) {
                 mLines.clear();
                 mRealPitchList.getPitchList().clear();
-                mRealPitchList.getPitchList().add(0);
                 setMidiInfo();
             }
         });
@@ -135,10 +138,16 @@ public class MidiFragment extends Fragment {
                 Integer pitch = ((Long) Math.round(PitchIntentService.getPitchInSemitone())).intValue();
                 mRealPitchList.getPitchList().add(pitch);
                 int length = mRealPitchList.getPitchList().size();
+                /*
                 ArrayList<Integer> list = new ArrayList<>();
                 list.add(mRealPitchList.getPitchList().get(length-2));
                 list.add(mRealPitchList.getPitchList().get(length-1));
                 addIntegerLineToChart(list, length-1);
+                */
+                if (pitch > 25 && pitch < 4280) {
+                    addIntegerLineToChart(pitch, length - 1);
+                    // updateChartMaxViewport(length);
+                }
                 mPitchTextView.setText(pitch + getResources().getString(R.string.note));
                 if (mIsPracticing) {
                     mPitchHandler.postDelayed(mPitchFreshRunnable, mDelayTime);
@@ -265,6 +274,19 @@ public class MidiFragment extends Fragment {
         updateChart();
     }
 
+    private void addIntegerLineToChart (int num, int index) {
+        ArrayList<PointValue> values = new ArrayList<PointValue>();
+        values.add(new PointValue(mDelayTime * index, num));
+        values.add(new PointValue(mDelayTime * (index+1), num));
+        Line line = new Line (values);
+        line.setColor(ChartUtils.COLOR_BLUE);
+        line.setShape(ValueShape.SQUARE);
+        line.setHasPoints(false);
+        line.setHasLabels(false);
+        mLines.add(line);
+        updateChart();
+    }
+
     private void updateChart () {
         LineChartData data = new LineChartData(mLines);
         Axis axisX = new Axis();
@@ -275,6 +297,17 @@ public class MidiFragment extends Fragment {
         data.setAxisYLeft(axisY);
         mChart.setZoomEnabled(true);
         mChart.setLineChartData(data);
+    }
+
+    private void updateChartMaxViewport (int index) {
+        updateChart();
+        int halfLength = mMaxViewMs / mDelayTime / 2;
+        if (index > halfLength) {
+            Viewport v = new Viewport(mChart.getMaximumViewport());
+            v.left = index - halfLength;
+            v.right = index + halfLength;
+            mChart.setCurrentViewport(v);
+        }
     }
 
 
