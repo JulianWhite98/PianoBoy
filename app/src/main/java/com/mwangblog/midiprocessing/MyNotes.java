@@ -14,12 +14,19 @@ public class MyNotes {
     private int mResolution;
     private Tempo mTempo;
 
+    private int mPqn;
+
+    private long mStartMs;
+    private long mEndMs;
+
     private static final String TAG = "MyNotes";
 
     public MyNotes (int resolution, Tempo tempo, ArrayList<NoteOn> noteOns, ArrayList<NoteOff> noteOffs) {
         mMyNotes = new ArrayList<MyNote>();
         mResolution = resolution;
         mTempo = tempo;
+
+        mPqn = mTempo.getMpqn();
 
         for (NoteOn noteOn : noteOns) {
             Boolean isZeroTickNote = false;
@@ -34,13 +41,15 @@ public class MyNotes {
                         break;
                     }
                     */
-                    MyNote myNote = new MyNote (noteOn, noteOff);
+                    MyNote myNote = new MyNote (noteOn, noteOff, mPqn, mResolution);
                     mMyNotes.add(myNote);
                     noteOffs.remove(noteOff);
                     break;
                 }
             }
         }
+        mStartMs = mMyNotes.get(0).getOnMs();
+        mEndMs = mMyNotes.get(mMyNotes.size()-1).getOffMs();
     }
 
     public ArrayList<MyNote> getMyNotes() {
@@ -53,5 +62,17 @@ public class MyNotes {
 
     public int getResolution() {
         return mResolution;
+    }
+
+    public int getPqn() {
+        return mPqn;
+    }
+
+    public long getStartMs() {
+        return mStartMs;
+    }
+
+    public long getEndMs() {
+        return mEndMs;
     }
 }

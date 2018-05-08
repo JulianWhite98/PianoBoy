@@ -146,9 +146,9 @@ public class MidiFragment extends Fragment {
                 */
                 if (pitch > 25 && pitch < 4280) {
                     addIntegerLineToChart(pitch, length - 1);
-                    // updateChartMaxViewport(length);
                 }
                 mPitchTextView.setText(pitch + getResources().getString(R.string.note));
+                // updateChartMaxViewport(length);
                 if (mIsPracticing) {
                     mPitchHandler.postDelayed(mPitchFreshRunnable, mDelayTime);
                 }
@@ -194,6 +194,7 @@ public class MidiFragment extends Fragment {
             @Override
             public void run() {
                 mMidi.setMidiInfo();
+                mMidi.setMidiPitchList(mDelayTime);
                 handler.sendEmptyMessage(0);
             }
         }).start();
@@ -209,10 +210,12 @@ public class MidiFragment extends Fragment {
         @Override
         public void handleMessage(Message msg) {
             MidiFragment fragment = mMidiFragmentWeakReference.get();
-            fragment.mInfoProgressBar.setVisibility(View.GONE);
+            // fragment.showMidiInfo();
+            // fragment.showMidiPitchList();
             fragment.drawMidiChart();
             fragment.mPracticeButton.setEnabled(true);
             fragment.mGetInfoButton.setEnabled(true);
+            fragment.mInfoProgressBar.setVisibility(View.GONE);
         }
     }
 
@@ -236,6 +239,17 @@ public class MidiFragment extends Fragment {
         mMidiInfoTextView.setText(midiInfo);
     }
 
+    private void showMidiPitchList () {
+        ArrayList<Integer> pitchList = mMidi.getMidiPitchList().getPitchList();
+        String pitchListInfo = "PitchList: \n";
+        int i = 0;
+        for (Integer j : pitchList) {
+            pitchListInfo += (i*mDelayTime + " : " +  j + "\n");
+            i++;
+        }
+        mMidiInfoTextView.setText(pitchListInfo);
+    }
+
     private void drawMidiChart () {
 
         MyNotes myNotes = mMidi.getMyNotes();
@@ -243,10 +257,10 @@ public class MidiFragment extends Fragment {
         int resolution = myNotes.getResolution();
         for (MyNote myNote : myNotes.getMyNotes()) {
             ArrayList<PointValue> values = new ArrayList<PointValue>();
-            values.add(new PointValue(MidiUtil.ticksToMs(myNote.getNoteOn().getTick(), pqn,resolution), myNote.getNoteOn().getNoteValue()));
-            values.add(new PointValue(MidiUtil.ticksToMs(myNote.getNoteOff().getTick(), pqn, resolution), myNote.getNoteOff().getNoteValue()));
+            values.add(new PointValue(myNote.getOnMs(), myNote.getPitch()));
+            values.add(new PointValue(myNote.getOffMs(), myNote.getPitch()));
             Line line = new Line (values);
-            line.setColor(ChartUtils.COLOR_RED);
+            line.setColor(ChartUtils.COLOR_ORANGE);
             line.setShape(ValueShape.CIRCLE);
             line.setHasPoints(false);
             line.setHasLabels(false);
@@ -300,12 +314,11 @@ public class MidiFragment extends Fragment {
     }
 
     private void updateChartMaxViewport (int index) {
-        updateChart();
         int halfLength = mMaxViewMs / mDelayTime / 2;
         if (index > halfLength) {
             Viewport v = new Viewport(mChart.getMaximumViewport());
-            v.left = index - halfLength;
-            v.right = index + halfLength;
+            v.left = (index - halfLength) * mDelayTime;
+            v.right = (index + halfLength) * mDelayTime;
             mChart.setCurrentViewport(v);
         }
     }

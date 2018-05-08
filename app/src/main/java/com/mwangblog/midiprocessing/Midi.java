@@ -11,6 +11,7 @@ import android.util.Log;
 import com.mwangblog.midiprocessing.event.MidiEvent;
 import com.mwangblog.midiprocessing.util.MidiEventListener;
 import com.mwangblog.midiprocessing.util.MidiProcessor;
+import com.mwangblog.midiprocessing.util.MidiUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +28,7 @@ public class Midi {
     private int mStreamId;
     private ArrayList<String> mMidiInfo;
     private MyNotes mMyNotes = null;
+    private PitchList mMidiPitchList;
 
     private static final int MAX_SOUNDS = 1;
     private static final String TAG = "Midi";
@@ -83,6 +85,32 @@ public class Midi {
             // Log.i(TAG, "init InputStream successfully.");
         } else {
 
+        }
+    }
+
+    public PitchList getMidiPitchList() {
+        return mMidiPitchList;
+    }
+
+    public void setMidiPitchList(int delayTime) {
+        if (mMyNotes == null) {
+            return;
+        }
+        mMidiPitchList = new PitchList();
+        long endMs = mMyNotes.getEndMs();
+        Log.i (TAG, "setMidiPitchList, endMs = " + endMs);
+        for (int i = 0; i*delayTime < endMs; i++) {
+            boolean isSet = false;
+            for (MyNote myNote : mMyNotes.getMyNotes()) {
+                if (myNote.getOnMs() <=  (i*delayTime) && myNote.getOffMs() >= (i*delayTime)) {
+                    mMidiPitchList.getPitchList().add(myNote.getPitch());
+                    isSet = true;
+                    break;
+                }
+            }
+            if (!isSet) {
+                mMidiPitchList.getPitchList().add(0);
+            }
         }
     }
 
