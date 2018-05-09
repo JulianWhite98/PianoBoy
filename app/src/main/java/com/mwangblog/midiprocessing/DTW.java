@@ -21,7 +21,7 @@ public final class DTW {
     /** Default constructor for a class which implements dynamic time warping. */
     public DTW() { }
 
-	public Result compute(final float[] pSample, final float[] pTemplate) {
+	public Result compute(final Integer[] pSample, final Integer[] pTemplate) {
         // Declare Iteration Constants.
         final int lN = pSample.length;
         final int lM = pTemplate.length;

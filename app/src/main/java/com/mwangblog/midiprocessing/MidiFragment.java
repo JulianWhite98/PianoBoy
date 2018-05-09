@@ -49,6 +49,7 @@ public class MidiFragment extends Fragment {
 
     private Midi mMidi;
     private PitchList mRealPitchList;
+    private PitchList mMidiPitchList;
 
     private static final String ARG_MIDI_NAME = "midi_id";
     private static final String TAG = "MidiFragment";
@@ -68,7 +69,9 @@ public class MidiFragment extends Fragment {
     private Runnable mPitchFreshRunnable;
 
     private final int mDelayTime = 50;
+    private final int mCompareLength = 20;
     private final int mMaxViewMs = 5000;
+    private int mMidiWindowStartIndex = 0;
 
     private boolean mIsPracticing;
 
@@ -125,6 +128,7 @@ public class MidiFragment extends Fragment {
             public void onClick(View v) {
                 mLines.clear();
                 mRealPitchList.getPitchList().clear();
+                mMidiWindowStartIndex = 0;
                 setMidiInfo();
             }
         });
@@ -138,16 +142,25 @@ public class MidiFragment extends Fragment {
                 Integer pitch = ((Long) Math.round(PitchIntentService.getPitchInSemitone())).intValue();
                 mRealPitchList.getPitchList().add(pitch);
                 int length = mRealPitchList.getPitchList().size();
-                /*
-                ArrayList<Integer> list = new ArrayList<>();
-                list.add(mRealPitchList.getPitchList().get(length-2));
-                list.add(mRealPitchList.getPitchList().get(length-1));
-                addIntegerLineToChart(list, length-1);
-                */
                 if (pitch > 25 && pitch < 4280) {
                     addIntegerLineToChart(pitch, length - 1);
                 }
                 mPitchTextView.setText(pitch + getResources().getString(R.string.note));
+
+                if ( length%mCompareLength == 0 && length != 0 ) {
+                    List<Integer> realList = mRealPitchList.getPitchList().subList(length-mCompareLength, length);
+                    Integer[] realArray = realList.toArray(new Integer[realList.size()]);
+                    if (length > mMidiPitchList.getPitchList().size()) {
+                        mPracticeButton.performClick();
+                        return;
+                    }
+                    List<Integer> midiList = mMidiPitchList.getPitchList().subList(length-mCompareLength, length);
+                    Integer[] midiArray = midiList.toArray(new Integer[midiList.size()]);
+                    DTW dtw = new DTW();
+                    DTW.Result result = dtw.compute(realArray, midiArray);
+                    Log.i(TAG, "Compare Result: " + result.getDistance());
+//                    mMidiWindowStartIndex = minIndex-1;
+                }
                 // updateChartMaxViewport(length);
                 if (mIsPracticing) {
                     mPitchHandler.postDelayed(mPitchFreshRunnable, mDelayTime);
@@ -195,6 +208,7 @@ public class MidiFragment extends Fragment {
             public void run() {
                 mMidi.setMidiInfo();
                 mMidi.setMidiPitchList(mDelayTime);
+                mMidiPitchList = mMidi.getMidiPitchList();
                 handler.sendEmptyMessage(0);
             }
         }).start();
@@ -268,24 +282,6 @@ public class MidiFragment extends Fragment {
         }
         updateChart();
         mMidiInfoTextView.setText(getResources().getString(R.string.chart_show_below));
-    }
-
-    private void addIntegerLineToChart (ArrayList<Integer> numList, int index) {
-        int length = numList.size();
-        int i = length - 1;
-        ArrayList<PointValue> values = new ArrayList<PointValue>();
-        for (Integer num : numList) {
-            values.add(new PointValue(mDelayTime * (index - i), num));
-            i -= 1;
-        }
-        Line line = new Line (values);
-        line.setColor(ChartUtils.COLOR_BLUE);
-        line.setShape(ValueShape.SQUARE);
-        line.setHasPoints(false);
-        line.setHasLabels(false);
-        // line.setHasLabelsOnlyForSelected(true);
-        mLines.add(line);
-        updateChart();
     }
 
     private void addIntegerLineToChart (int num, int index) {
