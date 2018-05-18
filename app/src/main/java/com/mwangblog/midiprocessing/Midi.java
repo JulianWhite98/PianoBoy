@@ -93,7 +93,7 @@ public class Midi {
     }
 
     public void setMidiPitchList(int delayTime) {
-        if (mMyNotes == null) {
+        if (mMyNotes == null || mMidiPitchList != null) {
             return;
         }
         mMidiPitchList = new PitchList();

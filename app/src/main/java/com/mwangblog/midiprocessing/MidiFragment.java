@@ -69,7 +69,7 @@ public class MidiFragment extends Fragment {
     private Runnable mPitchFreshRunnable;
 
     private final int mDelayTime = 50;
-    private final int mCompareLength = 20;
+    private final int mCompareLength = 60;
     private final int mMaxViewMs = 3000;
     private int mMidiWindowStartIndex = 0;
 
@@ -140,18 +140,24 @@ public class MidiFragment extends Fragment {
             @Override
             public void run() {
                 Integer pitch = ((Long) Math.round(PitchIntentService.getPitchInSemitone())).intValue();
-                mRealPitchList.getPitchList().add(pitch);
-                int length = mRealPitchList.getPitchList().size();
-                int index = length - 1;
-                int pitchTest = index < mMidiPitchList.getPitchList().size() ? mMidiPitchList.getPitchList().get(index) : -1;
-                if (pitch > 25 && pitch < 4280) {
-                    if (pitchTest == mRealPitchList.getPitchList().get(index)) {
-                        addIntegerLineToChart(pitch, length -1 , ChartUtils.COLOR_GREEN);
-                    } else {
-                        addIntegerLineToChart(pitch, length - 1, ChartUtils.COLOR_RED);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Integer pitch = ((Long) Math.round(PitchIntentService.getPitchInSemitone())).intValue();
+                        mRealPitchList.getPitchList().add(pitch);
+                        int length = mRealPitchList.getPitchList().size();
+                        int index = length - 1;
+                        int pitchTest = index < mMidiPitchList.getPitchList().size() ? mMidiPitchList.getPitchList().get(index) : -1;
+                        if (pitch > 25 && pitch < 4280) {
+                            if (pitchTest == mRealPitchList.getPitchList().get(index)) {
+                                addIntegerLineToChart(pitch, length -1 , ChartUtils.COLOR_GREEN);
+                            } else {
+                                addIntegerLineToChart(pitch, length - 1, ChartUtils.COLOR_RED);
+                            }
+                            updateChartMaxViewport(length);
+                        }
                     }
-                    updateChartMaxViewport(length);
-                }
+                }).start();
                 mPitchTextView.setText(pitch + getResources().getString(R.string.note));
                 if (mIsPracticing) {
                     mPitchHandler.postDelayed(mPitchFreshRunnable, mDelayTime);
@@ -173,7 +179,6 @@ public class MidiFragment extends Fragment {
                     mPitchTextView.setText(0 + getResources().getString(R.string.note));
                     mGetInfoButton.setEnabled(true);
                     mIsPracticing = false;
-                    calDTWScore();
                 } else {
                     mPracticeButton.setText(R.string.stop_practicing);
                     mGetInfoButton.setEnabled(false);
@@ -187,14 +192,6 @@ public class MidiFragment extends Fragment {
         mLines = new ArrayList<Line>();
 
         return v;
-    }
-
-    private void calDTWScore () {
-        Integer[] realArray = mRealPitchList.getPitchList().toArray(new Integer[mRealPitchList.getPitchList().size()]);
-        Integer[] midiArray = mMidiPitchList.getPitchList().toArray(new Integer[mMidiPitchList.getPitchList().size()]);
-        DTW dtw = new DTW();
-        DTW.Result result = dtw.compute(realArray, midiArray);
-        mMidiInfoTextView.setText("Score: " + result.getDistance());
     }
 
     private void setMidiInfo () {
