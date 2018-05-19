@@ -96,20 +96,30 @@ public class Midi {
         if (mMyNotes == null || mMidiPitchList != null) {
             return;
         }
-        mMidiPitchList = new PitchList();
+        PitchList pitchList = new PitchList();
         long endMs = mMyNotes.getEndMs();
         Log.i (TAG, "setMidiPitchList, endMs = " + endMs);
         for (int i = 0; i*delayTime < endMs; i++) {
             boolean isSet = false;
             for (MyNote myNote : mMyNotes.getMyNotes()) {
                 if (myNote.getOnMs() <=  (i*delayTime) && myNote.getOffMs() >= (i*delayTime)) {
-                    mMidiPitchList.getPitchList().add(myNote.getPitch());
+                    pitchList.getPitchList().add(myNote.getPitch());
                     isSet = true;
                     break;
                 }
             }
             if (!isSet) {
-                mMidiPitchList.getPitchList().add(0);
+                pitchList.getPitchList().add(0);
+            }
+        }
+        mMidiPitchList = new PitchList();
+        boolean start = false;
+        for (Integer pitch : pitchList.getPitchList()) {
+            if (!start && pitch > 0) {
+                start = true;
+            }
+            if (start) {
+                mMidiPitchList.getPitchList().add(pitch);
             }
         }
     }
