@@ -75,6 +75,8 @@ public class MidiFragment extends Fragment {
     private boolean mIsPracticing;
     private boolean mDetectingPitch;
 
+    private int mErrorCount = 0;
+
 
     public static MidiFragment newInstance (String name) {
         Bundle args = new Bundle();
@@ -155,6 +157,7 @@ public class MidiFragment extends Fragment {
                                 if (pitchTest == mRealPitchList.getPitchList().get(index)) {
                                     addIntegerLineToChart(pitch, length - 1, ChartUtils.COLOR_GREEN);
                                 } else {
+                                    mErrorCount++;
                                     addIntegerLineToChart(pitch, length - 1, ChartUtils.COLOR_RED);
                                 }
                                 updateChartMaxViewport(length);
@@ -183,6 +186,7 @@ public class MidiFragment extends Fragment {
                 if (mDetectingPitch) {
                     mPracticeButton.setText(R.string.start_practicing);
                     mPitchTextView.setText(0 + getResources().getString(R.string.note));
+                    mMidiInfoTextView.setText("Error: " + mErrorCount + "/" + mMidiPitchList.getPitchList().size());
                     mGetInfoButton.setEnabled(true);
                     mDetectingPitch = false;
                     mIsPracticing = false;
@@ -233,6 +237,7 @@ public class MidiFragment extends Fragment {
             fragment.drawMidiChart();
             fragment.mPracticeButton.setEnabled(true);
             fragment.mGetInfoButton.setEnabled(true);
+            fragment.mErrorCount = 0;
             fragment.mInfoProgressBar.setVisibility(View.GONE);
         }
     }
